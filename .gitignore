@@ -1,0 +1,21 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+build/
+
+# Ambiente
+.env
+.env.*
+!.env.example
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea/

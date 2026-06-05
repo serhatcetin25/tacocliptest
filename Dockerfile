@@ -11,7 +11,7 @@ FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_STANDALONE=true
-ENV DATABASE_URL=file:./dev.db
+ENV DATABASE_URL=postgres://dummy:dummy@localhost:5432/dummy
 RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
@@ -23,7 +23,7 @@ FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=file:/app/data/tacoclip.db
+ENV DATABASE_URL=postgres://dummy:dummy@localhost:5432/dummy
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 RUN apt-get update \

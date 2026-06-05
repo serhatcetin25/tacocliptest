@@ -1,0 +1,30 @@
+services:
+  tacoclip:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: "${DATABASE_URL:-file:/app/data/tacoclip.db}"
+      SESSION_SECRET: "${SESSION_SECRET:?Set SESSION_SECRET in .env before starting TacoClip}"
+      CORS_ORIGIN: "${CORS_ORIGIN:-}"
+      GOOGLE_API_KEY: "${GOOGLE_API_KEY:-}"
+      GOOGLE_CSE_ID: "${GOOGLE_CSE_ID:-}"
+    volumes:
+      - tacoclip_data:/app/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  tacoclip_data:

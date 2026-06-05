@@ -1,5 +1,5 @@
 /**
- * Cliente HTTP tipado para a API TacoClip (Fastify - Fase 2).
+ * Cliente HTTP tipado para a API de busca TacoClip.
  *
  * Estratégia de fallback para mock:
  *  1. Tenta bater na API real.
@@ -34,7 +34,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
-    // Tenta extrair mensagem de erro padronizada da API (formato Fastify)
+    // Tenta extrair mensagem de erro padronizada da API
     let mensagem = `Erro ${res.status}`;
     try {
       const body = (await res.json()) as { message?: string };

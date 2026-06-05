@@ -1,6 +1,6 @@
 # TacoClip — Dashboard (Fase 3)
 
-SPA React que consome a API de busca (Fase 2) e exibe o dashboard de clipagem jornalística de Santa Catarina.
+SPA React que consome a API de busca do app Next principal e exibe o dashboard de clipagem jornalística de Santa Catarina.
 
 ## Stack
 
@@ -13,7 +13,7 @@ SPA React que consome a API de busca (Fase 2) e exibe o dashboard de clipagem jo
 
 ## Pré-requisitos
 
-- Node.js 18+
+- Node.js 22.12+
 - npm 9+
 
 ## Início rápido
@@ -32,7 +32,7 @@ Abra **http://localhost:5173** no navegador.
 
 | Variável | Descrição | Padrão |
 |----------|-----------|--------|
-| `VITE_API_URL` | URL base da API Fastify (Fase 2) | `http://localhost:3333` |
+| `VITE_API_URL` | URL base da API do app Next principal | `http://localhost:3000/api` |
 | `VITE_USE_MOCK_FALLBACK` | Se `true`, usa dados mock quando a API não responde | `true` |
 
 ## Estrutura de pastas
@@ -69,11 +69,11 @@ src/
 
 ## Conectando à API real
 
-1. Suba a API Fastify (Fase 2) na porta 3333.
+1. Suba o app principal do TacoClip na porta 3000.
 2. No `.env`, mude `VITE_USE_MOCK_FALLBACK=false`.
 3. Reinicie o dev server.
 
-O Vite proxy (`/api` → `localhost:3333`) cuida do CORS em desenvolvimento.
+O Vite proxy (`/api` → `localhost:3000/api`) cuida do CORS em desenvolvimento.
 
 ## Próximos passos
 

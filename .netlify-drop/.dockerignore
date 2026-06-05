@@ -1,0 +1,14 @@
+node_modules
+dashboard/node_modules
+.next
+dashboard/dist
+.tmp
+.git
+.env
+.env.*
+!.env.example
+!.env.production.example
+prisma/*.db
+prisma/*.db-journal
+*.tsbuildinfo
+npm-debug.log*

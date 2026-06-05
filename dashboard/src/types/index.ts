@@ -1,6 +1,6 @@
 /**
  * Tipos centrais do TacoClip.
- * Espelham exatamente o contrato da API Fastify (Fase 2).
+ * Espelham o contrato da API de busca servida pelo app Next principal.
  */
 
 // ─── Entidades ────────────────────────────────────────────────────────────────

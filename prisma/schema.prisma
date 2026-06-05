@@ -1,0 +1,175 @@
+// TacoClip — schema de dados (SQLite + Prisma)
+// SQLite não suporta enums no Prisma; usamos String com valores validados via Zod.
+// Valores permitidos estão documentados em src/lib/enums.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Usuários internos da TACO ────────────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  name      String
+  password  String // hash bcrypt
+  createdAt DateTime @default(now())
+
+  clippings     Clipping[]
+  reviewedDrafts MentionDraft[] @relation("DraftReviewer")
+}
+
+// ─── Clientes monitorados ─────────────────────────────────────────────────────
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  logoPath    String? // caminho do logo em /uploads
+  segment     String?
+  ownerName   String? // responsável interno na TACO
+  active      Boolean  @default(true)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clippings        Clipping[]
+  monitoringTerms  MonitoringTerm[]
+  mentionDrafts    MentionDraft[]
+
+  @@index([active])
+  @@index([name])
+}
+
+// ─── Veículos (mídias) reutilizáveis ──────────────────────────────────────────
+model Vehicle {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  defaultMediaType String? // ex.: "ONLINE", "IMPRESSO"...
+  site            String?
+  createdAt       DateTime @default(now())
+
+  clippings Clipping[]
+
+  @@index([name])
+}
+
+// ─── Editorias / categorias ───────────────────────────────────────────────────
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  clippings Clipping[]
+}
+
+// ─── Tags livres ──────────────────────────────────────────────────────────────
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  clippings ClippingTag[]
+}
+
+// ─── Clipagem (inserção na mídia) — coração do sistema ────────────────────────
+model Clipping {
+  id            String   @id @default(cuid())
+  title         String
+  mediaType     String // ONLINE | IMPRESSO | RADIO | TV | PORTAL | REDE_SOCIAL
+  publishedAt   DateTime
+  link          String?
+  journalist    String?
+  sentiment     String // POSITIVO | NEUTRO | NEGATIVO
+  reach         Int? // alcance/audiência estimada
+  vpe           Float? // Valor Publicitário Equivalente (R$)
+  mediaReturn   Float? // Retorno de mídia (R$)
+  excerpt       String? // trecho/resumo da menção
+  canonicalUrl  String? // URL canonizada (para dedupe)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  clientId   String
+  client     Client    @relation(fields: [clientId], references: [id])
+  vehicleId  String?
+  vehicle    Vehicle?  @relation(fields: [vehicleId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+
+  tags        ClippingTag[]
+  attachments Attachment[]
+
+  @@index([clientId])
+  @@index([publishedAt])
+  @@index([mediaType])
+  @@index([sentiment])
+  @@index([canonicalUrl])
+}
+
+// Join N:N entre Clipping e Tag
+model ClippingTag {
+  clippingId String
+  tagId      String
+  clipping   Clipping @relation(fields: [clippingId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([clippingId, tagId])
+  @@index([tagId])
+}
+
+// ─── Anexos (print/PDF) ───────────────────────────────────────────────────────
+model Attachment {
+  id         String   @id @default(cuid())
+  clippingId String
+  clipping   Clipping @relation(fields: [clippingId], references: [id], onDelete: Cascade)
+  filename   String // nome original
+  path       String // caminho em /uploads
+  mimeType   String
+  size       Int
+  createdAt  DateTime @default(now())
+
+  @@index([clippingId])
+}
+
+// ─── Termos de monitoramento por cliente ──────────────────────────────────────
+model MonitoringTerm {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  term      String // ex.: "TACO Comunicação" ou frase com aspas/operadores
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+}
+
+// ─── Rascunho de menção (fila de revisão) ─────────────────────────────────────
+// Resultado bruto da captura automática, aguardando aprovação humana.
+model MentionDraft {
+  id            String   @id @default(cuid())
+  title         String
+  link          String
+  canonicalUrl  String // URL canonizada, usada para dedupe
+  source        String? // domínio/veículo de origem (ex.: g1.globo.com)
+  snippet       String?
+  publishedAt   DateTime?
+  provider      String // GOOGLE_CSE | GOOGLE_NEWS_RSS | ...
+  status        String   @default("PENDENTE") // PENDENTE | APROVADO | DESCARTADO | DUPLICADO
+  isDuplicate   Boolean  @default(false)
+  duplicateOf   String? // id de outro draft/clipping suspeito
+  rawJson       String? // payload original (JSON) para auditoria
+  createdAt     DateTime @default(now())
+
+  clientId   String
+  client     Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  reviewedById String?
+  reviewedBy   User?  @relation("DraftReviewer", fields: [reviewedById], references: [id])
+
+  @@unique([clientId, canonicalUrl]) // evita duplicar o mesmo link para o mesmo cliente
+  @@index([status])
+  @@index([clientId])
+}
